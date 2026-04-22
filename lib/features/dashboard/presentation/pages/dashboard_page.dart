@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:uts_mobile/features/profile/presentation/pages/profile_page.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 
@@ -38,6 +38,17 @@ class DashboardPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text("Dashboard"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ProfilePage(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
