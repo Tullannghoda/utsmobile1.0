@@ -1,38 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'core/services/local_storage_service.dart';
+import 'core/theme/theme_provider.dart';
+import 'core/theme/app_theme.dart';
+
+import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
-import 'features/dashboard/presentation/pages/dashboard_page.dart';
-import 'features/tickets/presentation/pages/ticket_list_page.dart';
+import 'features/auth/presentation/pages/register_page.dart';
+// import 'features/auth/presentation/pages/forgot_password_page.dart'; // kalau belum ada, jangan aktifkan
+
+import 'features/main_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // INIT LOCAL STORAGE
   await LocalStorageService.init();
 
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget { // ✅ FIX
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) { // ✅ FIX
+    final themeMode = ref.watch(themeProvider);
+
     return MaterialApp(
       title: 'UTS Mobile',
       debugShowCheckedModeBanner: false,
 
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme, // ✅ FIX
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
 
       initialRoute: '/',
       routes: {
-        '/': (context) => const LoginPage(),
-        '/dashboard': (context) => const DashboardPage(),
-        '/tickets': (context) => const TicketListPage(),
+        '/': (context) => const SplashPage(),
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegisterPage(),
+        // '/forgot-password': (context) => const ForgotPasswordPage(), // ⚠️ aktifkan kalau file ada
+        '/home': (context) => const MainWrapper(),
       },
     );
   }

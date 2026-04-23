@@ -1,59 +1,278 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 
-class LoginPage extends ConsumerWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final email = TextEditingController();
-    final pass = TextEditingController();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends ConsumerState<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  bool _obscure = true;
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final success = await ref
+        .read(authProvider.notifier)
+        .login(_emailCtrl.text.trim(), _passCtrl.text);
+
+    if (success && mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Login")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: email,
-              decoration: const InputDecoration(labelText: "Email"),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding:
+          const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+
+                // Logo
+                Center(
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Icon(
+                      Icons.support_agent,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                Center(
+                  child: Text(
+                    'Selamat Datang',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Center(
+                  child: Text(
+                    'Masuk ke E-Helpdesk',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: Colors.grey),
+                  ),
+                ),
+
+                const SizedBox(height: 36),
+
+                // Demo info
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: Colors.blue.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.info_outline,
+                              size: 14, color: Colors.blue),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Demo Login',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text('User: user@mail.com / 123456',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.blue.shade700)),
+                      Text('Helpdesk: helpdesk@mail.com / 123456',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.blue.shade700)),
+                      Text('Admin: admin@mail.com / 123456',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.blue.shade700)),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Email
+                TextFormField(
+                  controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty)
+                      return 'Email wajib diisi';
+                    if (!v.contains('@'))
+                      return 'Format email tidak valid';
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                // Password
+                TextFormField(
+                  controller: _passCtrl,
+                  obscureText: _obscure,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon:
+                    const Icon(Icons.lock_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscure
+                          ? Icons.visibility_off
+                          : Icons.visibility),
+                      onPressed: () {
+                        setState(() {
+                          _obscure = !_obscure;
+                        });
+                      },
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty)
+                      return 'Password wajib diisi';
+                    if (v.length < 6)
+                      return 'Password minimal 6 karakter';
+                    return null;
+                  },
+                ),
+
+                // Forgot password
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () =>
+                        Navigator.pushNamed(
+                            context, '/forgot-password'),
+                    child: const Text('Lupa Password?'),
+                  ),
+                ),
+
+                // Error
+                if (auth.error != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius:
+                      BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline,
+                            color: Colors.red),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            auth.error!,
+                            style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 20),
+
+                // Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed:
+                    auth.isLoading ? null : _login,
+                    child: auth.isLoading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child:
+                      CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : const Text(
+                      'Masuk',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Register
+                Row(
+                  mainAxisAlignment:
+                  MainAxisAlignment.center,
+                  children: [
+                    const Text('Belum punya akun? '),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.pushNamed(
+                              context, '/register'),
+                      child: const Text(
+                        'Daftar Sekarang',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextField(
-              controller: pass,
-              decoration: const InputDecoration(labelText: "Password"),
-              obscureText: true,
-            ),
-
-            const SizedBox(height: 10),
-
-            if (auth.isLoading)
-              const CircularProgressIndicator(),
-
-            ElevatedButton(
-              onPressed: () async {
-                final success =
-                await ref.read(authProvider.notifier).login(
-                  email.text,
-                  pass.text,
-                );
-
-                if (success) {
-                  Navigator.pushReplacementNamed(
-                      context, '/dashboard');
-                }
-              },
-              child: const Text("Login"),
-            ),
-
-            if (auth.error != null)
-              Text(
-                auth.error!,
-                style: const TextStyle(color: Colors.red),
-              ),
-          ],
+          ),
         ),
       ),
     );
